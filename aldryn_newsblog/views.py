@@ -155,6 +155,7 @@ class ArticleDetail(AppConfigMixin, AppHookCheckMixin, PreviewModeMixin,
             self.queryset, self.object)
         context['next_article'] = self.get_next_object(
             self.queryset, self.object)
+        context['meta'] = self.get_object().as_meta()
         return context
 
     def get_prev_object(self, queryset=None, object=None):

@@ -52,6 +52,11 @@ else:
     raise ImproperlyConfigured(
         'Neither LANGUAGES nor LANGUAGE was found in settings.')
 
+if 'meta' in settings.INSTALLED_APPS:
+    from meta.models import ModelMeta
+else:
+    from .fake_meta import FakeMeta as ModelMeta
+
 
 # At startup time, SQL_NOW_FUNC will contain the database-appropriate SQL to
 # obtain the CURRENT_TIMESTAMP.
@@ -70,7 +75,8 @@ SQL_IS_TRUE = {
 @version_controlled_content(follow=['app_config'])
 class Article(TranslatedAutoSlugifyMixin,
               TranslationHelperMixin,
-              TranslatableModel):
+              TranslatableModel,
+              ModelMeta):
 
     # TranslatedAutoSlugifyMixin options
     slug_source_field_name = 'title'
@@ -140,6 +146,34 @@ class Article(TranslatedAutoSlugifyMixin,
                                     blank=True)
 
     objects = RelatedManager()
+
+    _metadata = {
+        'title': 'get_title',
+        'description': 'get_description',
+        'keywords': 'get_keywords',
+        'og_description': 'get_description',
+        'twitter_description': 'get_description',
+        'gplus_description': 'get_description',
+        # 'locale': 'get_locale',
+        # 'image': 'get_image_full_url',
+        # 'object_type': 'get_meta_attribute',
+        # 'og_type': 'get_meta_attribute',
+        # 'og_app_id': 'get_meta_attribute',
+        # 'og_profile_id': 'get_meta_attribute',
+        # 'og_publisher': 'get_meta_attribute',
+        # 'og_author_url': 'get_meta_attribute',
+        # 'og_author': 'get_meta_attribute',
+        # 'twitter_type': 'get_meta_attribute',
+        # 'twitter_site': 'get_meta_attribute',
+        # 'twitter_author': 'get_meta_attribute',
+        # 'gplus_type': 'get_meta_attribute',
+        # 'gplus_author': 'get_meta_attribute',
+        'published_time': 'publishing_date',
+        # 'modified_time': 'date_modified',
+        # 'expiration_time': 'date_published_end',
+        # 'tag': 'get_tags',
+        # 'url': 'get_absolute_url',
+    }
 
     class Meta:
         ordering = ['-publishing_date']
@@ -216,6 +250,15 @@ class Article(TranslatedAutoSlugifyMixin,
                     get_plugin_index_data(base_plugin, request))
                 text_bits.append(plugin_text_content)
         return ' '.join(text_bits)
+
+    def get_title(self):
+        return self.title
+
+    def get_description(self):
+        return self.meta_description or self.lead_in
+
+    def get_image_full_url(self):
+        return self.featured_image
 
     def save(self, *args, **kwargs):
         # Update the search index
