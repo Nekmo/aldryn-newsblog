@@ -274,7 +274,7 @@ class Article(TranslatedAutoSlugifyMixin,
         return (self.meta_keywords if self.meta_keywords else self.get_tags())
 
     def get_image_full_url(self):
-        return self.build_absolute_uri(self.featured_image.url)
+        return self.build_absolute_uri(self.featured_image.url) if self.featured_image else None
 
     def save(self, *args, **kwargs):
         # Update the search index
