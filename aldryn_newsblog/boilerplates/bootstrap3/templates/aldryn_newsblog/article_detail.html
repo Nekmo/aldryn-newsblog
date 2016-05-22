@@ -4,6 +4,13 @@
 {% block title %}{{ article.title }} - {{ block.super }}{% endblock %}
 {% block breadcrumb %}{% endblock %}
 
+{% block html_tag %} itemscope itemtype="http://schema.org/Blog" {% endblock %}
+
+{% block meta_tags %}
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    {% if meta %}{% include 'aldryn_newsblog/includes/meta.html' with meta=meta %}{% endif %}
+{% endblock %}
+
 {% block newsblog_content %}
     <div class="aldryn-newsblog-detail">
         {% include "aldryn_newsblog/includes/article.html" with detail_view="true" %}

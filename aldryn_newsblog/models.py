@@ -9,6 +9,8 @@ from django.core.urlresolvers import reverse
 from django.db import connection, models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.template.defaultfilters import truncatewords, striptags
+
 try:
     from django.utils.encoding import force_unicode
 except ImportError:
@@ -55,7 +57,9 @@ else:
 if 'meta' in settings.INSTALLED_APPS:
     from meta.models import ModelMeta
 else:
-    from .fake_meta import FakeMeta as ModelMeta
+    class ModelMeta(object):
+        def as_meta(self):
+            return {}
 
 
 # At startup time, SQL_NOW_FUNC will contain the database-appropriate SQL to
@@ -150,12 +154,12 @@ class Article(TranslatedAutoSlugifyMixin,
     _metadata = {
         'title': 'get_title',
         'description': 'get_description',
-        'keywords': 'get_keywords',
+        'str_keywords': 'get_keywords',
         'og_description': 'get_description',
         'twitter_description': 'get_description',
         'gplus_description': 'get_description',
-        # 'locale': 'get_locale',
-        # 'image': 'get_image_full_url',
+        'locale': 'get_locale',
+        'image': 'get_image_full_url',
         # 'object_type': 'get_meta_attribute',
         # 'og_type': 'get_meta_attribute',
         # 'og_app_id': 'get_meta_attribute',
@@ -171,8 +175,8 @@ class Article(TranslatedAutoSlugifyMixin,
         'published_time': 'publishing_date',
         # 'modified_time': 'date_modified',
         # 'expiration_time': 'date_published_end',
-        # 'tag': 'get_tags',
-        # 'url': 'get_absolute_url',
+        'tag': 'get_tags',
+        'url': 'get_absolute_url_meta',
     }
 
     class Meta:
@@ -193,6 +197,9 @@ class Article(TranslatedAutoSlugifyMixin,
         future date/time.
         """
         return (self.is_published and self.publishing_date > now())
+
+    def get_tags(self):
+        return ','.join(self.tags.names().values_list('name', flat=True))
 
     def get_absolute_url(self, language=None):
         """Returns the url for this Article in the selected permalink format."""
@@ -225,6 +232,9 @@ class Article(TranslatedAutoSlugifyMixin,
         with override(language):
             return reverse('{0}article-detail'.format(namespace), kwargs=kwargs)
 
+    def get_absolute_url_meta(self, meta_req=None):
+        return self.get_absolute_url()
+
     def get_search_data(self, language=None, request=None):
         """
         Provides an index for use with Haystack, or, for populating
@@ -251,14 +261,20 @@ class Article(TranslatedAutoSlugifyMixin,
                 text_bits.append(plugin_text_content)
         return ' '.join(text_bits)
 
+    def get_locale(self):
+        return get_current_language()
+
     def get_title(self):
         return self.title
 
     def get_description(self):
-        return self.meta_description or self.lead_in
+        return self.meta_description or striptags(truncatewords(self.lead_in, 50))
+
+    def get_keywords(self):
+        return (self.meta_keywords if self.meta_keywords else self.get_tags())
 
     def get_image_full_url(self):
-        return self.featured_image
+        return self.build_absolute_uri(self.featured_image.url)
 
     def save(self, *args, **kwargs):
         # Update the search index
