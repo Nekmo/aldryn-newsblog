@@ -2,6 +2,8 @@
 
 from __future__ import unicode_literals
 
+from cms.utils import get_cms_setting
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from cms.plugin_base import CMSPluginBase
@@ -31,7 +33,7 @@ class NewsBlogPlugin(TemplatePrefixMixin, CMSPluginBase):
 class NewsBlogArchivePlugin(NewsBlogPlugin):
     render_template = 'aldryn_newsblog/plugins/archive.html'
     name = _('Archive')
-    cache = False
+    cache = getattr(settings, 'ALDRYN_NEWSBLOG_ARCHIVE_CACHE', False)
     model = models.NewsBlogArchivePlugin
     form = forms.NewsBlogArchivePluginForm
 
@@ -101,6 +103,8 @@ class NewsBlogCategoriesPlugin(NewsBlogPlugin):
 class NewsBlogFeaturedArticlesPlugin(NewsBlogPlugin):
     render_template = 'aldryn_newsblog/plugins/featured_articles.html'
     name = _('Featured Articles')
+    cache = getattr(settings, 'ALDRYN_NEWSBLOG_FEATURED_CACHE',
+                    get_cms_setting('PLUGIN_CACHE'))
     model = models.NewsBlogFeaturedArticlesPlugin
     form = forms.NewsBlogFeaturedArticlesPluginForm
 
@@ -115,7 +119,7 @@ class NewsBlogFeaturedArticlesPlugin(NewsBlogPlugin):
 class NewsBlogLatestArticlesPlugin(NewsBlogPlugin):
     render_template = 'aldryn_newsblog/plugins/latest_articles.html'
     name = _('Latest Articles')
-    cache = False
+    cache = getattr(settings, 'ALDRYN_NEWSBLOG_LATEST_CACHE', False)
     model = models.NewsBlogLatestArticlesPlugin
     form = forms.NewsBlogLatestArticlesPluginForm
 
@@ -130,7 +134,7 @@ class NewsBlogLatestArticlesPlugin(NewsBlogPlugin):
 class NewsBlogRelatedPlugin(NewsBlogPlugin):
     render_template = 'aldryn_newsblog/plugins/related_articles.html'
     name = _('Related Articles')
-    cache = False
+    cache = getattr(settings, 'ALDRYN_NEWSBLOG_RELATED_CACHE', False)
     model = models.NewsBlogRelatedPlugin
 
     def get_article(self, request):
